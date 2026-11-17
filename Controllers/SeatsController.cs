@@ -29,16 +29,54 @@ public class SeatsController : ControllerBase
         var seats = await _context.Seats
             .AsNoTracking()
             .OrderBy(s => s.SeatNumber)
-            .Select(s => new SeatResponse
+            .Select(s => new
             {
-                Id = s.Id,
-                SeatNumber = s.SeatNumber,
-                Location = s.Location,
-                IsActive = s.IsActive
+                s.Id,
+                s.SeatNumber,
+                s.Location,
+                s.IsActive
             })
             .ToListAsync();
 
-        return Ok(seats);
+        var seatIds = seats.Select(s => s.Id).ToList();
+        var now = DateTime.UtcNow;
+
+        var reservations = await _context.SeatReservations
+            .AsNoTracking()
+            .Where(r =>
+                seatIds.Contains(r.SeatId) &&
+                (r.Status == "Pending" || r.Status == "Approved") &&
+                r.EndTime > now)
+            .OrderBy(r => r.StartTime)
+            .Select(r => new
+            {
+                r.Id,
+                r.SeatId,
+                r.StartTime,
+                r.EndTime,
+                r.Status
+            })
+            .ToListAsync();
+
+        var result = seats.Select(seat => new
+        {
+            seat.Id,
+            seat.SeatNumber,
+            seat.Location,
+            seat.IsActive,
+            Reservations = reservations
+                .Where(r => r.SeatId == seat.Id)
+                .Select(r => new
+                {
+                    r.Id,
+                    r.StartTime,
+                    r.EndTime,
+                    r.Status
+                })
+                .ToList()
+        });
+
+        return Ok(result);
     }
 
     [HttpGet("{id:int}")]
@@ -47,19 +85,44 @@ public class SeatsController : ControllerBase
         var seat = await _context.Seats
             .AsNoTracking()
             .Where(s => s.Id == id)
-            .Select(s => new SeatResponse
+            .Select(s => new
             {
-                Id = s.Id,
-                SeatNumber = s.SeatNumber,
-                Location = s.Location,
-                IsActive = s.IsActive
+                s.Id,
+                s.SeatNumber,
+                s.Location,
+                s.IsActive
             })
             .FirstOrDefaultAsync();
 
         if (seat == null)
             return NotFound(new { message = "Seat not found." });
 
-        return Ok(seat);
+        var now = DateTime.UtcNow;
+
+        var reservations = await _context.SeatReservations
+            .AsNoTracking()
+            .Where(r =>
+                r.SeatId == id &&
+                (r.Status == "Pending" || r.Status == "Approved") &&
+                r.EndTime > now)
+            .OrderBy(r => r.StartTime)
+            .Select(r => new
+            {
+                r.Id,
+                r.StartTime,
+                r.EndTime,
+                r.Status
+            })
+            .ToListAsync();
+
+        return Ok(new
+        {
+            seat.Id,
+            seat.SeatNumber,
+            seat.Location,
+            seat.IsActive,
+            Reservations = reservations
+        });
     }
 
     [HttpPost]
@@ -147,10 +210,12 @@ public class SeatsController : ControllerBase
                 r.EndTime > DateTime.UtcNow);
 
         if (hasActiveReservations)
+        {
             return Conflict(new
             {
                 message = "Cannot deactivate a seat with active reservations."
             });
+        }
 
         seat.IsActive = false;
 

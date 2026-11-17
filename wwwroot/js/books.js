@@ -1,5 +1,5 @@
 ﻿
-// ASSIGNED TO: KIM — PRACTICE
+// ASSIGNED TO: KIM — FRONTEND
 // PROJECT: Library Reservation Management System Practice
 
 let booksList = [];
@@ -30,6 +30,10 @@ function getBookRole() {
 function canManageBooks() {
     const role = getBookRole();
     return role === "admin" || role === "librarian";
+}
+
+function isMember() {
+    return getBookRole() === "member";
 }
 
 function getBookId(book) {
@@ -101,6 +105,10 @@ function renderBooksView() {
             showBookDetails(book);
         }
 
+        if (button.dataset.action === "reserve" && isMember()) {
+            reserveBook(book);
+        }
+
         if (button.dataset.action === "edit" && canManageBooks()) {
             showBookForm(book);
         }
@@ -123,6 +131,7 @@ async function loadBooks() {
 
     try {
         const result = await apiRequest("/Books");
+
         booksList = normalizeBooksResponse(result).filter(book =>
             getBookValue(book, "IsActive") === true
         );
@@ -183,50 +192,135 @@ function displayBooks(searchTerm = "") {
                     </tr>
                 </thead>
                 <tbody>
-                    ${filteredBooks.map(book => `
-                        <tr>
-                            <td>${escapeBookHtml(getBookValue(book, "ISBN"))}</td>
-                            <td>${escapeBookHtml(getBookValue(book, "Title"))}</td>
-                            <td>${escapeBookHtml(getBookValue(book, "Author"))}</td>
-                            <td>${escapeBookHtml(getBookValue(book, "Category") || "Uncategorized")}</td>
-                            <td>
-                                ${escapeBookHtml(getBookValue(book, "AvailableCopies"))}
-                                /
-                                ${escapeBookHtml(getBookValue(book, "TotalCopies"))}
-                            </td>
-                            <td>
-                                <button
-                                    class="button button-outline"
-                                    type="button"
-                                    data-action="view"
-                                    data-id="${Number(getBookId(book))}">
-                                    View
-                                </button>
+                    ${filteredBooks.map(book => {
+        const availableCopies = Number(
+            getBookValue(book, "AvailableCopies") ?? 0
+        );
 
-                                ${canManageBooks() ? `
+        return `
+                            <tr>
+                                <td>${escapeBookHtml(getBookValue(book, "ISBN"))}</td>
+                                <td>${escapeBookHtml(getBookValue(book, "Title"))}</td>
+                                <td>${escapeBookHtml(getBookValue(book, "Author"))}</td>
+                                <td>${escapeBookHtml(getBookValue(book, "Category") || "Uncategorized")}</td>
+                                <td>
+                                    ${escapeBookHtml(availableCopies)}
+                                    /
+                                    ${escapeBookHtml(getBookValue(book, "TotalCopies"))}
+                                </td>
+                                <td>
                                     <button
                                         class="button button-outline"
                                         type="button"
-                                        data-action="edit"
+                                        data-action="view"
                                         data-id="${Number(getBookId(book))}">
-                                        Edit
+                                        View
                                     </button>
 
-                                    <button
-                                        class="button button-outline"
-                                        type="button"
-                                        data-action="deactivate"
-                                        data-id="${Number(getBookId(book))}">
-                                        Deactivate
-                                    </button>
-                                ` : ""}
-                            </td>
-                        </tr>
-                    `).join("")}
+                                    ${isMember() ? `
+                                        <button
+                                            class="button button-primary"
+                                            type="button"
+                                            data-action="reserve"
+                                            data-id="${Number(getBookId(book))}"
+                                            ${availableCopies <= 0 ? "disabled" : ""}>
+                                            Reserve Book
+                                        </button>
+                                    ` : ""}
+
+                                    ${canManageBooks() ? `
+                                        <button
+                                            class="button button-outline"
+                                            type="button"
+                                            data-action="edit"
+                                            data-id="${Number(getBookId(book))}">
+                                            Edit
+                                        </button>
+
+                                        <button
+                                            class="button button-outline"
+                                            type="button"
+                                            data-action="deactivate"
+                                            data-id="${Number(getBookId(book))}">
+                                            Deactivate
+                                        </button>
+                                    ` : ""}
+                                </td>
+                            </tr>
+                        `;
+    }).join("")}
                 </tbody>
             </table>
         </div>
     `;
+}
+
+async function reserveBook(book) {
+    if (!isMember()) return;
+
+    const bookId = Number(getBookId(book));
+    const title = getBookValue(book, "Title");
+    const availableCopies = Number(getBookValue(book, "AvailableCopies") ?? 0);
+
+    if (!Number.isInteger(bookId) || bookId <= 0) {
+        showBooksMessage("Invalid book ID.", "error");
+        return;
+    }
+
+    if (availableCopies <= 0) {
+        showBooksMessage("This book currently has no available copies.", "error");
+        return;
+    }
+
+    const confirmed = confirm(
+        `Do you want to reserve "${title}"?\n\nYour reservation will be submitted for staff approval.`
+    );
+
+    if (!confirmed) return;
+
+    const buttons = document.querySelectorAll(
+        `[data-action="reserve"][data-id="${bookId}"]`
+    );
+
+    buttons.forEach(button => {
+        button.disabled = true;
+        button.textContent = "Submitting...";
+    });
+
+    try {
+        const result = await apiRequest("/BookReservations", {
+            method: "POST",
+            body: JSON.stringify({
+                bookId: bookId
+            })
+        });
+
+        showBooksMessage(
+            result?.message || "Reservation submitted successfully. Please wait for staff approval.",
+            "success"
+        );
+
+        await loadBooks();
+    } catch (error) {
+        showBooksMessage(
+            error.message || "Unable to submit your reservation.",
+            "error"
+        );
+
+        buttons.forEach(button => {
+            button.disabled = false;
+            button.textContent = "Reserve Book";
+        });
+    }
+}
+
+function showBooksMessage(message, type = "") {
+    const container = document.getElementById("booksMessage");
+
+    if (!container) return;
+
+    container.textContent = message;
+    container.className = type ? `message ${type}` : "message";
 }
 
 function showBookDetails(book) {
@@ -236,6 +330,7 @@ function showBookDetails(book) {
     if (!container) return;
 
     const publishedYear = getBookValue(book, "PublishedYear");
+    const availableCopies = Number(getBookValue(book, "AvailableCopies") ?? 0);
 
     container.innerHTML = `
         <div class="panel book-details-panel">
@@ -252,13 +347,27 @@ function showBookDetails(book) {
             <p><strong>Category:</strong> ${escapeBookHtml(getBookValue(book, "Category") || "Uncategorized")}</p>
             <p><strong>Published Year:</strong> ${escapeBookHtml(publishedYear ?? "Not specified")}</p>
             <p><strong>Total Copies:</strong> ${escapeBookHtml(getBookValue(book, "TotalCopies"))}</p>
-            <p><strong>Available Copies:</strong> ${escapeBookHtml(getBookValue(book, "AvailableCopies"))}</p>
+            <p><strong>Available Copies:</strong> ${escapeBookHtml(availableCopies)}</p>
+
+            ${isMember() ? `
+                <button
+                    class="button button-primary"
+                    id="reserveBookDetailsButton"
+                    type="button"
+                    ${availableCopies <= 0 ? "disabled" : ""}>
+                    Reserve Book
+                </button>
+            ` : ""}
         </div>
     `;
 
     document.getElementById("closeBookDetails").addEventListener("click", () => {
         container.innerHTML = "";
         selectedBook = null;
+    });
+
+    document.getElementById("reserveBookDetailsButton")?.addEventListener("click", () => {
+        reserveBook(book);
     });
 }
 
@@ -445,9 +554,7 @@ async function saveBook(event) {
         document.getElementById("bookFormContainer").innerHTML = "";
         document.getElementById("bookDetails").innerHTML = "";
 
-        const booksMessage = document.getElementById("booksMessage");
-        booksMessage.textContent = "Book saved successfully.";
-        booksMessage.className = "message success";
+        showBooksMessage("Book saved successfully.", "success");
 
         await loadBooks();
     } catch (error) {
@@ -468,8 +575,6 @@ async function deactivateBook(book) {
 
     if (!confirmed) return;
 
-    const message = document.getElementById("booksMessage");
-
     try {
         await apiRequest(`/Books/${getBookId(book)}`, {
             method: "DELETE"
@@ -478,13 +583,14 @@ async function deactivateBook(book) {
         document.getElementById("bookDetails").innerHTML = "";
         document.getElementById("bookFormContainer").innerHTML = "";
 
-        message.textContent = "Book deactivated successfully.";
-        message.className = "message success";
+        showBooksMessage("Book deactivated successfully.", "success");
 
         await loadBooks();
     } catch (error) {
-        message.textContent = error.message || "Unable to deactivate book.";
-        message.className = "message error";
+        showBooksMessage(
+            error.message || "Unable to deactivate book.",
+            "error"
+        );
     }
 }
 

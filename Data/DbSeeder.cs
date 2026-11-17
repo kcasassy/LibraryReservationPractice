@@ -1,5 +1,7 @@
 ﻿
-// KIM — BACKEND
+// ASSIGNED TO: KIM — BACKEND
+// PROJECT: Library Reservation Management System Practice
+
 using LibraryReservationPractice.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -41,7 +43,7 @@ public static class DbSeeder
             }
         };
 
-        var defaultPassword = "Library123!";
+        const string defaultPassword = "Library123!";
 
         foreach (var account in testAccounts)
         {
@@ -77,6 +79,43 @@ public static class DbSeeder
             };
 
             context.Seats.AddRange(seats);
+        }
+
+        if (!await context.ReadingSpaces.AnyAsync())
+        {
+            var readingSpaces = new[]
+            {
+                new ReadingSpace
+                {
+                    Name = "Individual Study Area",
+                    Location = "Quiet Reading Section",
+                    Capacity = 1,
+                    IsActive = true
+                },
+                new ReadingSpace
+                {
+                    Name = "Group Discussion Room",
+                    Location = "Second Floor",
+                    Capacity = 8,
+                    IsActive = true
+                },
+                new ReadingSpace
+                {
+                    Name = "Quiet Reading Area",
+                    Location = "Main Reading Hall",
+                    Capacity = 20,
+                    IsActive = true
+                },
+                new ReadingSpace
+                {
+                    Name = "Computer Research Area",
+                    Location = "Digital Learning Section",
+                    Capacity = 10,
+                    IsActive = true
+                }
+            };
+
+            context.ReadingSpaces.AddRange(readingSpaces);
         }
 
         await context.SaveChangesAsync();

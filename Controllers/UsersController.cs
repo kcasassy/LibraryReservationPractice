@@ -1,8 +1,11 @@
 ﻿
 // KIM — BACKEND
+// PROJECT: Library Reservation Management System Practice
+
 using System.Security.Claims;
 using LibraryReservationPractice.Data;
 using LibraryReservationPractice.DTOs;
+using LibraryReservationPractice.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -55,10 +58,19 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Librarian")]
     public async Task<IActionResult> GetAllUsers()
     {
-        var users = await _context.Users
+        var query = _context.Users.AsQueryable();
+
+        if (User.IsInRole("Librarian"))
+        {
+            query = query.Where(u =>
+                u.Role == UserRole.Member &&
+                u.IsActive);
+        }
+
+        var users = await query
             .OrderBy(u => u.FullName)
             .Select(u => new UserResponse
             {

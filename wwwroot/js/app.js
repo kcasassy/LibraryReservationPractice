@@ -1,10 +1,11 @@
 ﻿
-// ASSIGNED TO: KIM — PRACTICE
+// ASSIGNED TO: KIM — FRONTEND
 // PROJECT: Library Reservation Management System Practice
 
 const authSection = document.getElementById("authSection");
 const applicationSection = document.getElementById("applicationSection");
 const loginForm = document.getElementById("loginForm");
+const registerForm = document.getElementById("registerForm");
 const authMessage = document.getElementById("authMessage");
 const logoutButton = document.getElementById("logoutButton");
 const userInfo = document.getElementById("userInfo");
@@ -12,48 +13,52 @@ const roleBadge = document.getElementById("roleBadge");
 const viewContainer = document.getElementById("viewContainer");
 const pageTitle = document.getElementById("pageTitle");
 const pageMessage = document.getElementById("pageMessage");
+const loginPanel = document.getElementById("loginPanel");
+const registerPanel = document.getElementById("registerPanel");
+const showLoginTab = document.getElementById("showLoginTab");
+const showRegisterTab = document.getElementById("showRegisterTab");
 
-const viewNames = {
-    dashboard: "Dashboard",
-    books: "Books",
-    bookReservations: "Book Reservations",
-    borrowings: "Borrowings",
-    seats: "Seats",
-    seatReservations: "Seat Reservations",
-    readingSpaces: "Reading Spaces",
-    readingSpaceReservations: "Reading Space Reservations",
-    qcpl: "QCPL External Reservations",
-    reports: "Reports",
-    users: "User Management"
-};
+function normalizeRole(role) {
+    return String(role || "").trim().toLowerCase();
+}
 
 function showMessage(element, message, type = "") {
     if (!element) return;
-
     element.textContent = message;
     element.className = `message ${type}`;
 }
 
+function showAuthTab(tab) {
+    if (!loginPanel || !registerPanel) return;
+
+    const isLogin = tab === "login";
+
+    loginPanel.classList.toggle("hidden", !isLogin);
+    registerPanel.classList.toggle("hidden", isLogin);
+    showLoginTab?.classList.toggle("active", isLogin);
+    showRegisterTab?.classList.toggle("active", !isLogin);
+
+    showMessage(authMessage, "");
+}
+
+showLoginTab?.addEventListener("click", () => showAuthTab("login"));
+showRegisterTab?.addEventListener("click", () => showAuthTab("register"));
+
 function showApplication(user) {
-    authSection?.classList.add("hidden");
-    applicationSection?.classList.remove("hidden");
-    logoutButton?.classList.remove("hidden");
-    userInfo?.classList.remove("hidden");
+    authSection.classList.add("hidden");
+    applicationSection.classList.remove("hidden");
+    logoutButton.classList.remove("hidden");
+    userInfo.classList.remove("hidden");
 
-    const role = String(user.role || "").toLowerCase();
+    const role = normalizeRole(user.role);
 
-    if (userInfo) {
-        userInfo.textContent = user.fullName || user.email || "Signed in";
-    }
-
-    if (roleBadge) {
-        roleBadge.textContent = user.role || "User";
-    }
+    userInfo.textContent = user.fullName || user.email || "Signed in";
+    roleBadge.textContent = user.role || "User";
 
     document.querySelectorAll(".staff-only").forEach(element => {
         element.classList.toggle(
             "hidden",
-            role !== "admin" && role !== "librarian"
+            !["admin", "librarian"].includes(role)
         );
     });
 
@@ -65,34 +70,62 @@ function showApplication(user) {
 }
 
 function showLogin() {
-    applicationSection?.classList.add("hidden");
-    authSection?.classList.remove("hidden");
-    logoutButton?.classList.add("hidden");
-    userInfo?.classList.add("hidden");
+    applicationSection.classList.add("hidden");
+    authSection.classList.remove("hidden");
+    logoutButton.classList.add("hidden");
+    userInfo.classList.add("hidden");
+    showAuthTab("login");
 }
 
-function isAllowedView(viewName, role) {
+function isViewAllowed(viewName, role) {
+    const commonViews = [
+        "dashboard",
+        "books",
+        "bookReservations",
+        "borrowings",
+        "seats",
+        "seatReservations",
+        "readingSpaces",
+        "readingSpaceReservations"
+    ];
+
+    if (commonViews.includes(viewName)) {
+        if (viewName === "borrowings") {
+            return ["admin", "librarian", "member"].includes(role);
+        }
+
+        return ["admin", "librarian", "member"].includes(role);
+    }
+
     if (["qcpl", "reports"].includes(viewName)) {
-        return role === "admin" || role === "librarian";
+        return ["admin", "librarian"].includes(role);
     }
 
     if (viewName === "users") {
         return role === "admin";
     }
 
-    return true;
+    return false;
 }
 
-function openView(viewName) {
-    const user = getCurrentUser();
-    const role = String(user?.role || "").toLowerCase();
+async function openView(viewName) {
+    const viewNames = {
+        dashboard: "Dashboard",
+        books: "Books",
+        bookReservations: "Book Reservations",
+        borrowings: "Borrowings",
+        seats: "Seats",
+        seatReservations: "Seat Reservations",
+        readingSpaces: "Reading Spaces",
+        readingSpaceReservations: "Reading Space Reservations",
+        qcpl: "QCPL External Reservation Monitoring",
+        reports: "Reports",
+        users: "User Management"
+    };
 
-    if (!viewNames[viewName]) {
-        showMessage(pageMessage, "Unknown section.", "error");
-        return;
-    }
+    const role = normalizeRole(getCurrentUser()?.role);
 
-    if (!isAllowedView(viewName, role)) {
+    if (!isViewAllowed(viewName, role)) {
         showMessage(
             pageMessage,
             "You are not authorized to access this section.",
@@ -101,9 +134,7 @@ function openView(viewName) {
         return;
     }
 
-    if (pageTitle) {
-        pageTitle.textContent = viewNames[viewName];
-    }
+    pageTitle.textContent = viewNames[viewName] || "Dashboard";
 
     document.querySelectorAll(".nav-link").forEach(button => {
         button.classList.toggle(
@@ -115,68 +146,76 @@ function openView(viewName) {
     showMessage(pageMessage, "");
 
     if (viewName === "dashboard") {
+        const user = getCurrentUser();
+
         viewContainer.innerHTML = `
-            <section class="dashboard-view">
-                <h2>Welcome to LibraryHub</h2>
+            <div class="dashboard-welcome">
+                <span class="eyebrow">QUEZON CITY PUBLIC LIBRARY</span>
+                <h2>Welcome, ${escapeHtml(user?.fullName || "Library User")}!</h2>
                 <p class="muted">
-                    Welcome, ${escapeHTML(user?.fullName || user?.email || "User")}.
-                    Select a section from the navigation menu.
+                    Access library resources and manage your authorized activities.
                 </p>
-            </section>
+            </div>
+            <div class="dashboard-cards">
+                <article class="dashboard-card red-card">
+                    <h3>Books</h3>
+                    <p>Browse available library books.</p>
+                </article>
+                <article class="dashboard-card blue-card">
+                    <h3>Reservations</h3>
+                    <p>Review your reservation records.</p>
+                </article>
+                <article class="dashboard-card yellow-card">
+                    <h3>Reading Spaces</h3>
+                    <p>Explore available study areas.</p>
+                </article>
+            </div>
         `;
         return;
     }
 
     if (viewName === "books") {
         if (typeof renderBooksView === "function") {
-            renderBooksView();
+            await renderBooksView();
         } else {
-            viewContainer.innerHTML = `
-                <h2>Books</h2>
-                <p class="message error">Books module could not be loaded.</p>
-            `;
+            viewContainer.innerHTML =
+                `<p class="message error">Books module could not be loaded.</p>`;
         }
         return;
     }
 
-    if (typeof renderModuleView === "function") {
-        renderModuleView(viewName);
-        return;
+    try {
+        const loaded = await renderModule(viewName);
+
+        if (!loaded) {
+            viewContainer.innerHTML =
+                `<p class="message error">This section is not available.</p>`;
+        }
+    } catch (error) {
+        viewContainer.innerHTML =
+            `<p class="message error">${escapeHtml(error.message)}</p>`;
     }
-
-    viewContainer.innerHTML = `
-        <h2>${viewNames[viewName]}</h2>
-        <p class="message error">Module could not be loaded.</p>
-    `;
 }
 
-function escapeHTML(value) {
-    return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[character]);
 }
 
-loginForm?.addEventListener("submit", async event => {
+loginForm.addEventListener("submit", async event => {
     event.preventDefault();
 
-    const email = document.getElementById("email")?.value.trim();
-    const password = document.getElementById("password")?.value;
-
-    if (!email || !password) {
-        showMessage(authMessage, "Enter your email and password.", "error");
-        return;
-    }
-
-    showMessage(authMessage, "Signing in...");
-
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
     const submitButton = loginForm.querySelector("button[type='submit']");
 
-    if (submitButton) {
-        submitButton.disabled = true;
-    }
+    showMessage(authMessage, "Signing in...");
+    submitButton.disabled = true;
 
     try {
         const result = await apiRequest("/Auth/login", {
@@ -185,11 +224,7 @@ loginForm?.addEventListener("submit", async event => {
         });
 
         if (!result?.token) {
-            throw new Error("Login response did not contain a token.");
-        }
-
-        if (!result.role || !result.userId) {
-            throw new Error("Login response is missing user information.");
+            throw new Error("The server did not return an authentication token.");
         }
 
         const user = {
@@ -199,27 +234,66 @@ loginForm?.addEventListener("submit", async event => {
             role: result.role
         };
 
-        saveAuthSession(result.token, user);
+        if (!user.role) {
+            throw new Error("The server did not return the user's role.");
+        }
 
+        saveAuthSession(result.token, user);
         loginForm.reset();
         showMessage(authMessage, "");
         showApplication(user);
     } catch (error) {
         showMessage(authMessage, error.message, "error");
     } finally {
-        if (submitButton) {
-            submitButton.disabled = false;
-        }
+        submitButton.disabled = false;
     }
 });
 
-logoutButton?.addEventListener("click", () => {
+registerForm?.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const formData = new FormData(registerForm);
+    const submitButton = registerForm.querySelector("button[type='submit']");
+
+    const registration = {
+        fullName: String(formData.get("fullName") || "").trim(),
+        memberNumber: String(formData.get("memberNumber") || "").trim() || null,
+        email: String(formData.get("email") || "").trim(),
+        password: String(formData.get("password") || "")
+    };
+
+    showMessage(authMessage, "Creating your account...");
+    submitButton.disabled = true;
+
+    try {
+        const result = await apiRequest("/Auth/register", {
+            method: "POST",
+            body: JSON.stringify(registration)
+        });
+
+        registerForm.reset();
+        showAuthTab("login");
+        document.getElementById("email").value = registration.email;
+
+        showMessage(
+            authMessage,
+            result?.message || "Registration successful. You can now sign in.",
+            "success"
+        );
+    } catch (error) {
+        showMessage(authMessage, error.message, "error");
+    } finally {
+        submitButton.disabled = false;
+    }
+});
+
+logoutButton.addEventListener("click", () => {
     clearAuthSession();
     showLogin();
     showMessage(authMessage, "You have been logged out.", "success");
 });
 
-document.getElementById("navigation")?.addEventListener("click", event => {
+document.getElementById("navigation").addEventListener("click", event => {
     const button = event.target.closest("[data-view]");
 
     if (!button || button.classList.contains("hidden")) {
@@ -229,7 +303,7 @@ document.getElementById("navigation")?.addEventListener("click", event => {
     openView(button.dataset.view);
 });
 
-document.getElementById("brandLink")?.addEventListener("click", event => {
+document.getElementById("brandLink").addEventListener("click", event => {
     event.preventDefault();
 
     if (getAuthToken()) {

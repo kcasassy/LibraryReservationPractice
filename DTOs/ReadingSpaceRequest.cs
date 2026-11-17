@@ -19,3 +19,4 @@ public class ReadingSpaceRequest
     [Range(1, 500)]
     public int Capacity { get; set; }
 }
+

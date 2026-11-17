@@ -13,3 +13,4 @@ public class ReadingSpaceReservationStatusRequest
     public string Status { get; set; } = string.Empty;
 }
 
+    

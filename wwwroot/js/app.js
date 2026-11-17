@@ -1,4 +1,5 @@
-﻿// ASSIGNED TO: CY
+﻿
+// ASSIGNED TO: KIM — PRACTICE
 // PROJECT: Library Reservation Management System Practice
 
 const authSection = document.getElementById("authSection");
@@ -12,21 +13,42 @@ const viewContainer = document.getElementById("viewContainer");
 const pageTitle = document.getElementById("pageTitle");
 const pageMessage = document.getElementById("pageMessage");
 
+const viewNames = {
+    dashboard: "Dashboard",
+    books: "Books",
+    bookReservations: "Book Reservations",
+    borrowings: "Borrowings",
+    seats: "Seats",
+    seatReservations: "Seat Reservations",
+    readingSpaces: "Reading Spaces",
+    readingSpaceReservations: "Reading Space Reservations",
+    qcpl: "QCPL External Reservations",
+    reports: "Reports",
+    users: "User Management"
+};
+
 function showMessage(element, message, type = "") {
+    if (!element) return;
+
     element.textContent = message;
     element.className = `message ${type}`;
 }
 
 function showApplication(user) {
-    authSection.classList.add("hidden");
-    applicationSection.classList.remove("hidden");
-    logoutButton.classList.remove("hidden");
-    userInfo.classList.remove("hidden");
+    authSection?.classList.add("hidden");
+    applicationSection?.classList.remove("hidden");
+    logoutButton?.classList.remove("hidden");
+    userInfo?.classList.remove("hidden");
 
     const role = String(user.role || "").toLowerCase();
 
-    userInfo.textContent = user.email || "Signed in";
-    roleBadge.textContent = user.role || "User";
+    if (userInfo) {
+        userInfo.textContent = user.fullName || user.email || "Signed in";
+    }
+
+    if (roleBadge) {
+        roleBadge.textContent = user.role || "User";
+    }
 
     document.querySelectorAll(".staff-only").forEach(element => {
         element.classList.toggle(
@@ -43,44 +65,45 @@ function showApplication(user) {
 }
 
 function showLogin() {
-    applicationSection.classList.add("hidden");
-    authSection.classList.remove("hidden");
-    logoutButton.classList.add("hidden");
-    userInfo.classList.add("hidden");
+    applicationSection?.classList.add("hidden");
+    authSection?.classList.remove("hidden");
+    logoutButton?.classList.add("hidden");
+    userInfo?.classList.add("hidden");
+}
+
+function isAllowedView(viewName, role) {
+    if (["qcpl", "reports"].includes(viewName)) {
+        return role === "admin" || role === "librarian";
+    }
+
+    if (viewName === "users") {
+        return role === "admin";
+    }
+
+    return true;
 }
 
 function openView(viewName) {
-    const viewNames = {
-        dashboard: "Dashboard",
-        books: "Books",
-        bookReservations: "Book Reservations",
-        borrowings: "Borrowings",
-        seats: "Seats",
-        seatReservations: "Seat Reservations",
-        readingSpaces: "Reading Spaces",
-        readingSpaceReservations: "Reading Space Reservations",
-        qcpl: "QCPL External Reservation Monitoring",
-        reports: "Reports",
-        users: "User Management"
-    };
+    const user = getCurrentUser();
+    const role = String(user?.role || "").toLowerCase();
 
-    const role = String(getCurrentUser()?.role || "").toLowerCase();
-
-    if (
-        ["qcpl", "reports"].includes(viewName) &&
-        role !== "admin" &&
-        role !== "librarian"
-    ) {
-        showMessage(pageMessage, "You are not authorized to access this section.", "error");
+    if (!viewNames[viewName]) {
+        showMessage(pageMessage, "Unknown section.", "error");
         return;
     }
 
-    if (viewName === "users" && role !== "admin") {
-        showMessage(pageMessage, "Only administrators can access User Management.", "error");
+    if (!isAllowedView(viewName, role)) {
+        showMessage(
+            pageMessage,
+            "You are not authorized to access this section.",
+            "error"
+        );
         return;
     }
 
-    pageTitle.textContent = viewNames[viewName] || "Dashboard";
+    if (pageTitle) {
+        pageTitle.textContent = viewNames[viewName];
+    }
 
     document.querySelectorAll(".nav-link").forEach(button => {
         button.classList.toggle(
@@ -93,11 +116,13 @@ function openView(viewName) {
 
     if (viewName === "dashboard") {
         viewContainer.innerHTML = `
-            <h2>Welcome to LibraryHub</h2>
-            <p class="muted">
-                Your account is signed in. Choose a section from the menu
-                to manage library records and reservations.
-            </p>
+            <section class="dashboard-view">
+                <h2>Welcome to LibraryHub</h2>
+                <p class="muted">
+                    Welcome, ${escapeHTML(user?.fullName || user?.email || "User")}.
+                    Select a section from the navigation menu.
+                </p>
+            </section>
         `;
         return;
     }
@@ -114,24 +139,44 @@ function openView(viewName) {
         return;
     }
 
+    if (typeof renderModuleView === "function") {
+        renderModuleView(viewName);
+        return;
+    }
+
     viewContainer.innerHTML = `
-        <h2>${viewNames[viewName] || "Library Section"}</h2>
-        <p class="muted">
-            This section will be connected in the upcoming frontend batches.
-        </p>
+        <h2>${viewNames[viewName]}</h2>
+        <p class="message error">Module could not be loaded.</p>
     `;
 }
 
-loginForm.addEventListener("submit", async event => {
+function escapeHTML(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+loginForm?.addEventListener("submit", async event => {
     event.preventDefault();
 
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
+    const email = document.getElementById("email")?.value.trim();
+    const password = document.getElementById("password")?.value;
+
+    if (!email || !password) {
+        showMessage(authMessage, "Enter your email and password.", "error");
+        return;
+    }
 
     showMessage(authMessage, "Signing in...");
 
     const submitButton = loginForm.querySelector("button[type='submit']");
-    submitButton.disabled = true;
+
+    if (submitButton) {
+        submitButton.disabled = true;
+    }
 
     try {
         const result = await apiRequest("/Auth/login", {
@@ -139,42 +184,42 @@ loginForm.addEventListener("submit", async event => {
             body: JSON.stringify({ email, password })
         });
 
-        const token = result?.token || result?.accessToken;
-
-        if (!token) {
-            throw new Error("The login response did not contain an authentication token.");
+        if (!result?.token) {
+            throw new Error("Login response did not contain a token.");
         }
 
-        const returnedUser = result.user || result;
+        if (!result.role || !result.userId) {
+            throw new Error("Login response is missing user information.");
+        }
 
         const user = {
-            id: returnedUser.id || returnedUser.userId,
-            email: returnedUser.email || email,
-            role: returnedUser.role || result.role
+            id: result.userId,
+            fullName: result.fullName,
+            email: result.email,
+            role: result.role
         };
 
-        if (!user.role) {
-            throw new Error("The login response did not contain the user's role.");
-        }
+        saveAuthSession(result.token, user);
 
-        saveAuthSession(token, user);
         loginForm.reset();
         showMessage(authMessage, "");
         showApplication(user);
     } catch (error) {
         showMessage(authMessage, error.message, "error");
     } finally {
-        submitButton.disabled = false;
+        if (submitButton) {
+            submitButton.disabled = false;
+        }
     }
 });
 
-logoutButton.addEventListener("click", () => {
+logoutButton?.addEventListener("click", () => {
     clearAuthSession();
     showLogin();
     showMessage(authMessage, "You have been logged out.", "success");
 });
 
-document.getElementById("navigation").addEventListener("click", event => {
+document.getElementById("navigation")?.addEventListener("click", event => {
     const button = event.target.closest("[data-view]");
 
     if (!button || button.classList.contains("hidden")) {
@@ -184,7 +229,7 @@ document.getElementById("navigation").addEventListener("click", event => {
     openView(button.dataset.view);
 });
 
-document.getElementById("brandLink").addEventListener("click", event => {
+document.getElementById("brandLink")?.addEventListener("click", event => {
     event.preventDefault();
 
     if (getAuthToken()) {

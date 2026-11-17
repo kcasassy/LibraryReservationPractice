@@ -1,0 +1,96 @@
+﻿<!-- ASSIGNED TO: KIM — PRACTICE -->
+<!-- PROJECT: Library Reservation Management System Practice -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Reservation Management System</title>
+    <link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+    <header class="topbar">
+        <a class="brand" href="#" id="brandLink">
+            <span class="brand-mark">L</span>
+            <span>Library<span class="brand-accent">Hub</span></span>
+        </a>
+
+        <div class="topbar-actions">
+            <span id="userInfo" class="user-info hidden"></span>
+            <button id="logoutButton" class="button button-outline hidden" type="button">
+                Log out
+            </button>
+        </div>
+    </header>
+
+    <main class="page-container">
+        <section id="authSection" class="auth-layout">
+            <div class="auth-intro">
+                <span class="eyebrow">LIBRARY RESERVATION SYSTEM</span>
+                <h1>Your library,<br><span>organized.</span></h1>
+                <p>Manage books, reservations, borrowing, reading spaces, and more in one place.</p>
+            </div>
+
+            <div class="panel auth-panel">
+                <h2>Welcome back</h2>
+                <p class="muted">Sign in to continue to your library account.</p>
+
+                <form id="loginForm">
+                    <label for="email">Email address</label>
+                    <input id="email" name="email" type="email" autocomplete="username" required>
+
+                    <label for="password">Password</label>
+                    <input id="password" name="password" type="password" autocomplete="current-password" required>
+
+                    <button class="button button-primary full-width" type="submit">
+                        Sign in
+                    </button>
+                </form>
+
+                <p id="authMessage" class="message" role="alert"></p>
+            </div>
+        </section>
+
+        <section id="applicationSection" class="application-layout hidden">
+            <aside class="sidebar">
+                <p class="sidebar-heading">MAIN MENU</p>
+                <nav id="navigation">
+                    <button class="nav-link active" data-view="dashboard" type="button">Dashboard</button>
+                    <button class="nav-link" data-view="books" type="button">Books</button>
+                    <button class="nav-link" data-view="bookReservations" type="button">Book Reservations</button>
+                    <button class="nav-link" data-view="borrowings" type="button">Borrowings</button>
+                    <button class="nav-link" data-view="seats" type="button">Seats</button>
+                    <button class="nav-link" data-view="seatReservations" type="button">Seat Reservations</button>
+                    <button class="nav-link" data-view="readingSpaces" type="button">Reading Spaces</button>
+                    <button class="nav-link" data-view="readingSpaceReservations" type="button">Space Reservations</button>
+                    <button class="nav-link staff-only hidden" data-view="qcpl" type="button">QCPL Monitoring</button>
+                    <button class="nav-link staff-only hidden" data-view="reports" type="button">Reports</button>
+                    <button class="nav-link admin-only hidden" data-view="users" type="button">User Management</button>
+                </nav>
+            </aside>
+
+            <section class="content-area">
+                <div class="content-heading">
+                    <div>
+                        <span class="eyebrow">LIBRARY MANAGEMENT</span>
+                        <h1 id="pageTitle">Dashboard</h1>
+                    </div>
+                    <span id="roleBadge" class="role-badge"></span>
+                </div>
+
+                <div id="viewContainer" class="panel">
+                    <h2>Welcome to LibraryHub</h2>
+                    <p class="muted">Choose a section from the menu to get started.</p>
+                </div>
+
+                <p id="pageMessage" class="message" role="status"></p>
+            </section>
+        </section>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/books.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

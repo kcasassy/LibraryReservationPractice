@@ -143,9 +143,7 @@ public class BooksController : ControllerBase
 
     [HttpPut("{id:int}")]
     [Authorize(Roles = "Admin,Librarian")]
-    public async Task<IActionResult> UpdateBook(
-        int id,
-        BookRequest request)
+    public async Task<IActionResult> UpdateBook(int id, BookRequest request)
     {
         var book = await _context.Books
             .FirstOrDefaultAsync(b => b.Id == id && b.IsActive);
@@ -159,14 +157,6 @@ public class BooksController : ControllerBase
         }
 
         var isbn = request.ISBN.Trim();
-
-        if (request.AvailableCopies > request.TotalCopies)
-        {
-            return BadRequest(new
-            {
-                message = "Available copies cannot exceed total copies."
-            });
-        }
 
         var duplicateIsbn = await _context.Books
             .AnyAsync(b => b.ISBN == isbn && b.Id != id);
@@ -195,7 +185,7 @@ public class BooksController : ControllerBase
         book.Category = request.Category?.Trim() ?? string.Empty;
         book.PublishedYear = request.PublishedYear;
         book.TotalCopies = request.TotalCopies;
-        book.AvailableCopies = request.AvailableCopies;
+        book.AvailableCopies = request.TotalCopies - currentlyUnavailable;
 
         await _context.SaveChangesAsync();
 
@@ -244,4 +234,3 @@ public class BooksController : ControllerBase
         });
     }
 }
-

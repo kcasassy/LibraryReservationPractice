@@ -1,0 +1,514 @@
+﻿
+// ASSIGNED TO: CY
+// PROJECT: Library Reservation Management System Practice
+
+:root {
+    --red: #b4232f;
+    --red-dark: #891b25;
+    --yellow: #f5c542;
+    --background: #fffaf0;
+    --surface: #ffffff;
+    --text: #292524;
+    --muted: #78716c;
+    --border: #e7e1d8;
+    --success: #18794e;
+    --danger: #b4232f;
+    --shadow: 0 12px 32px rgba(41, 37, 36, 0.08);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--background);
+    color: var(--text);
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+    button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+.hidden {
+    display: none !important;
+}
+
+.topbar {
+    min-height: 72px;
+    padding: 0 6%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text);
+    font-size: 1.25rem;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.brand-mark {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 11px;
+    background: var(--red);
+    color: white;
+}
+
+.brand-accent {
+    color: var(--red);
+}
+
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.user-info {
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.page-container {
+    width: min(1200px, 92%);
+    margin: 40px auto;
+}
+
+.auth-layout {
+    min-height: 65vh;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    align-items: center;
+    gap: 60px;
+}
+
+.auth-intro h1 {
+    margin: 14px 0;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    line-height: 1.05;
+}
+
+    .auth-intro h1 span {
+        color: var(--red);
+    }
+
+.auth-intro p {
+    max-width: 480px;
+    color: var(--muted);
+    font-size: 1.1rem;
+    line-height: 1.7;
+}
+
+.eyebrow,
+.sidebar-heading {
+    color: var(--red);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.13em;
+}
+
+.panel {
+    padding: 28px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+}
+
+.auth-panel {
+    width: 100%;
+    max-width: 440px;
+    justify-self: end;
+}
+
+.panel h2 {
+    margin-top: 0;
+}
+
+.muted {
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+form {
+    display: grid;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+label {
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+input {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: white;
+    color: var(--text);
+}
+
+    input:focus {
+        outline: 2px solid var(--yellow);
+        border-color: var(--red);
+    }
+
+.button {
+    min-height: 42px;
+    padding: 10px 16px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    font-weight: 700;
+}
+
+.button-primary {
+    background: var(--red);
+    color: white;
+}
+
+    .button-primary:hover {
+        background: var(--red-dark);
+    }
+
+.button-outline {
+    background: white;
+    border-color: var(--border);
+    color: var(--text);
+}
+
+    .button-outline:hover {
+        border-color: var(--red);
+        color: var(--red);
+    }
+
+.full-width {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.message {
+    min-height: 20px;
+    margin: 14px 0 0;
+    font-size: 0.9rem;
+}
+
+    .message.error {
+        color: var(--danger);
+    }
+
+    .message.success {
+        color: var(--success);
+    }
+
+.application-layout {
+    display: grid;
+    grid-template-columns: 235px minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
+}
+
+.sidebar {
+    padding: 22px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+}
+
+.sidebar-heading {
+    padding: 0 10px;
+}
+
+#navigation {
+    display: grid;
+    gap: 5px;
+    margin-top: 18px;
+}
+
+.nav-link {
+    width: 100%;
+    padding: 11px 12px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text);
+    text-align: left;
+}
+
+    .nav-link:hover,
+    .nav-link.active {
+        background: #fff1d1;
+        color: var(--red);
+        font-weight: 700;
+    }
+
+.content-area {
+    min-width: 0;
+}
+
+.content-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+    .content-heading h1 {
+        margin: 7px 0 0;
+        font-size: 2rem;
+    }
+
+.role-badge {
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: var(--yellow);
+    color: #4a3500;
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+
+/* BOOKS MANAGEMENT */
+
+.books-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+    .books-header h2,
+    .books-header h3 {
+        margin: 0 0 6px;
+    }
+
+    .books-header .muted {
+        margin: 0;
+    }
+
+.books-search {
+    display: grid;
+    gap: 9px;
+    margin-bottom: 22px;
+}
+
+    .books-search input {
+        width: 100%;
+    }
+
+.books-count {
+    margin: 14px 0;
+}
+
+    .books-count p {
+        margin: 0;
+    }
+
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    text-align: left;
+}
+
+    .data-table th,
+    .data-table td {
+        padding: 14px 12px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+    }
+
+    .data-table th {
+        background: #fff1d1;
+        color: var(--red-dark);
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+
+    .data-table td {
+        font-size: 0.9rem;
+    }
+
+    .data-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .data-table tbody tr:hover {
+        background: #fffaf0;
+    }
+
+    .data-table td:last-child {
+        min-width: 210px;
+    }
+
+    .data-table td .button {
+        margin: 3px;
+        padding: 7px 10px;
+        min-height: 34px;
+        font-size: 0.8rem;
+    }
+
+.empty-state {
+    padding: 35px 20px;
+    text-align: center;
+    background: #fffaf0;
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+}
+
+    .empty-state h3 {
+        margin-top: 0;
+    }
+
+    .empty-state p {
+        margin-bottom: 0;
+    }
+
+.book-details-panel,
+.book-form-panel {
+    margin-top: 24px;
+}
+
+    .book-details-panel p {
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border);
+        overflow-wrap: anywhere;
+    }
+
+        .book-details-panel p:last-child {
+            border-bottom: none;
+        }
+
+    .book-form-panel form {
+        max-width: 600px;
+    }
+
+    .book-form-panel input {
+        margin-bottom: 5px;
+    }
+
+.form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+#booksMessage:empty {
+    display: none;
+}
+
+#bookFormMessage:empty {
+    display: none;
+}
+
+#pageMessage:empty {
+    display: none;
+}
+
+/* RESPONSIVE DESIGN */
+
+@media (max-width: 1000px) {
+    .data-table {
+        min-width: 750px;
+    }
+}
+
+@media (max-width: 800px) {
+    .auth-layout {
+        grid-template-columns: 1fr;
+        gap: 28px;
+    }
+
+    .auth-panel {
+        max-width: none;
+        justify-self: stretch;
+    }
+
+    .application-layout {
+        grid-template-columns: 1fr;
+    }
+
+    #navigation {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .books-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+        .books-header .button {
+            width: 100%;
+        }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+        .form-actions .button {
+            width: 100%;
+        }
+}
+
+@media (max-width: 480px) {
+    .page-container {
+        width: 94%;
+        margin: 22px auto;
+    }
+
+    .topbar {
+        padding: 0 3%;
+    }
+
+    .panel {
+        padding: 20px;
+    }
+
+    #navigation {
+        grid-template-columns: 1fr;
+    }
+
+    .user-info {
+        display: none;
+    }
+
+    .content-heading h1 {
+        font-size: 1.6rem;
+    }
+}
